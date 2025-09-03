@@ -7,7 +7,7 @@ export default function ItemDetail({ item }) {
 
   const handleAdd = (qty) => {
     add(item, qty);
-    // 👋 sacamos el alert, ahora simplemente se agrega al carrito
+    
   };
 
   return (
