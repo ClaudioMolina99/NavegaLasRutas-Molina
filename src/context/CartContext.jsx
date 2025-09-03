@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+// src/context/CartContext.jsx
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const CartContext = createContext(null);
 const STORAGE_KEY = "cart";
@@ -21,33 +22,61 @@ export function CartProvider({ children }) {
     } catch {}
   }, [cart]);
 
-  // Acciones
+  const toKey = (v) => String(v);
+
+  // Agregar / actualizar respetando stock (si existe)
   const add = (product, qty = 1) => {
-    setCart(prev => {
-      const exists = prev.find(i => i.id === product.id);
-      if (exists) {
-        return prev.map(i =>
-          i.id === product.id ? { ...i, qty: i.qty + qty } : i
-        );
+    const inc = Math.max(1, Number(qty) || 1);
+    setCart((prev) => {
+      const key = toKey(product.id);
+      const idx = prev.findIndex((i) => toKey(i.id) === key);
+      if (idx !== -1) {
+        const copy = [...prev];
+        const current = copy[idx];
+        const max = product.stock ?? current.stock ?? Infinity;
+        const nextQty = Math.min((current.qty || 0) + inc, max);
+        copy[idx] = { ...current, ...product, qty: nextQty };
+        return copy;
       }
-      return [...prev, { ...product, qty }];
+      const max = product.stock ?? Infinity;
+      const safeQty = Math.min(inc, max);
+      return [...prev, { ...product, qty: safeQty }];
     });
   };
 
-  const remove = id => setCart(prev => prev.filter(i => i.id !== id));
+  const remove = (id) =>
+    setCart((prev) => prev.filter((i) => toKey(i.id) !== toKey(id)));
+
   const clear = () => setCart([]);
-  const setQty = (id, qty) =>
-    setCart(prev =>
-      prev.map(i =>
-        i.id === id ? { ...i, qty: Math.max(1, Number(qty) || 1) } : i
-      )
+
+  const setQty = (id, qty) => {
+    setCart((prev) =>
+      prev.map((i) => {
+        if (toKey(i.id) !== toKey(id)) return i;
+        const max = i.stock ?? Infinity;
+        const next = Math.max(1, Math.min(Number(qty) || 1, max));
+        return { ...i, qty: next };
+      })
     );
+  };
 
   // Derivados
-  const count = cart.reduce((acc, i) => acc + i.qty, 0);
-  const total = cart.reduce((acc, i) => acc + i.qty * (i.price || 0), 0);
+  const count = useMemo(
+    () => cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0),
+    [cart]
+  );
+
+  const total = useMemo(
+    () =>
+      cart.reduce(
+        (acc, i) => acc + (Number(i.qty) || 0) * (Number(i.price) || 0),
+        0
+      ),
+    [cart]
+  );
 
   const value = { cart, add, remove, clear, setQty, count, total };
+
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 

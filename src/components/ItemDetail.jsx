@@ -1,6 +1,15 @@
+// src/components/ItemDetail.jsx
 import ItemCount from "./ItemCount";
+import { useCart } from "../context/CartContext";
 
 export default function ItemDetail({ item }) {
+  const { add } = useCart();
+
+  const handleAdd = (qty) => {
+    add(item, qty);
+    // 👋 sacamos el alert, ahora simplemente se agrega al carrito
+  };
+
   return (
     <section
       style={{
@@ -23,8 +32,8 @@ export default function ItemDetail({ item }) {
         <p style={{ opacity: 0.8 }}>Categoría: {item.category}</p>
         <h3 style={{ margin: "8px 0" }}>${item.price}</h3>
 
-        {/* Contador para elegir cantidad y agregar */}
-        <ItemCount item={item} />
+        {/* Contador con onAdd que suma al carrito */}
+        <ItemCount stock={item.stock} initial={1} onAdd={handleAdd} />
       </div>
     </section>
   );

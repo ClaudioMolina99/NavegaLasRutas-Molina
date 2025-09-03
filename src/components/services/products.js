@@ -1,4 +1,5 @@
-import { PRODUCTS } from "../data/products";
+// src/components/services/products.js
+import { PRODUCTS } from "../../data/products";
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 

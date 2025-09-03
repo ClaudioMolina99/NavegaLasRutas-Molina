@@ -12,22 +12,26 @@ async function fetchProductById(id) {
 }
 
 export default function ItemDetailContainer() {
-  const { id } = useParams(); // lee /item/:id
+  // 👇 debe coincidir con la ruta: /item/:productId
+  const { productId } = useParams();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchProductById(id)
+    fetchProductById(productId)
       .then((prod) => {
         if (alive) setItem(prod);
       })
-      .finally(() => alive && setLoading(false));
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
     return () => {
       alive = false;
     };
-  }, [id]); // importante: dependencia del parámetro de URL
+  }, [productId]); // dependencia del parámetro de URL
 
   if (loading) {
     return (
@@ -45,5 +49,9 @@ export default function ItemDetailContainer() {
     );
   }
 
-  return <ItemDetail item={item} />;
+  return (
+    <section style={{ padding: 16 }}>
+      <ItemDetail item={item} />
+    </section>
+  );
 }
